@@ -1,12 +1,16 @@
-'use strict';
 const AWS = require('aws-sdk');
-
-AWS.config.update({ region: 'us-east-1' });
-
-const ses = new AWS.SES();
+// using basic AWS security replace with yours
+const ses = new AWS.SES({ region: 'us-east-1' }); 
 
 module.exports.sendEmail = async (event) => {
-  const { receiver_email, subject, body_text } = JSON.parse(event.body);
+  const { receiver_email, body_text, subject } = JSON.parse(event.body);
+
+  if (!receiver_email || !body_text || !subject) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ message: 'Missing required fields' })
+    };
+  }
 
   const params = {
     Destination: {
@@ -18,19 +22,20 @@ module.exports.sendEmail = async (event) => {
       },
       Subject: { Data: subject }
     },
-    Source: 'winniebeargo600@gmail.com' // Replace with your verified SES email
+    Source: 'roker.octavia88@gmail.com' // Replace with your email
   };
 
   try {
-    await ses.sendEmail(params).promise();
+    await ses.sendEmail(params).promise(); //function should be promise and it will not keep thread blocked
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: 'Email sent successfully' }),
+      body: JSON.stringify({ message: 'Email sent successfully' })
     };
   } catch (error) {
+    console.error('Error sending email:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: error.message }),
+      body: JSON.stringify({ message: 'Failed to send email' })
     };
   }
 };
